@@ -27,7 +27,7 @@ import {
   Code,
   PenTool,
   MessageCircle,
-  X,
+  Menu,
 } from "lucide-react";
 import { UserMenu } from "../components/ui/user-menu";
 import { useChat } from "../hooks/use-chat";
@@ -157,15 +157,20 @@ export default function Home() {
 
   return (
     <div className="flex h-screen bg-background">
-      {/* Sidebar toggle button */}
+      {/* Sidebar toggle button - fixed position */}
       <div className="fixed bottom-4 left-4 z-50">
         <Button
           variant="outline"
           size="icon"
           className="rounded-full shadow-lg"
           onClick={() => setSidebarOpen(!sidebarOpen)}
+          aria-label={sidebarOpen ? "Close sidebar" : "Open sidebar"}
         >
-          <MessageSquare className="h-5 w-5" />
+          {sidebarOpen ? (
+            <MessageCircle className="h-5 w-5" />
+          ) : (
+            <Menu className="h-5 w-5" />
+          )}
         </Button>
       </div>
 
@@ -202,22 +207,6 @@ export default function Home() {
                       </Button>
                     </TooltipTrigger>
                     <TooltipContent>Toggle theme</TooltipContent>
-                  </Tooltip>
-                </TooltipProvider>
-                
-                <TooltipProvider>
-                  <Tooltip>
-                    <TooltipTrigger asChild>
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        onClick={() => setSidebarOpen(false)}
-                        className="hover:bg-muted dark:hover:bg-[#262626]"
-                      >
-                        <X className="h-5 w-5" />
-                      </Button>
-                    </TooltipTrigger>
-                    <TooltipContent>Close sidebar</TooltipContent>
                   </Tooltip>
                 </TooltipProvider>
               </div>
