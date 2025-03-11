@@ -36,7 +36,10 @@ export function ChatInput({
 }: ChatInputProps) {
   const [showFileUpload, setShowFileUpload] = React.useState(false);
   const textareaRef = React.useRef<HTMLTextAreaElement>(null);
-
+  const [displayedPlaceholder, setDisplayedPlaceholder] = React.useState("");
+  const [isTyping, setIsTyping] = React.useState(true);
+  const [fullPlaceholder, setFullPlaceholder] = React.useState(placeholder);
+  
   // Auto-resize textarea
   React.useEffect(() => {
     const textarea = textareaRef.current;
@@ -46,11 +49,63 @@ export function ChatInput({
     }
   }, [value]);
 
+  // Letter-by-letter animation for placeholder
+  React.useEffect(() => {
+    // When placeholder changes, start the animation from scratch
+    if (placeholder !== fullPlaceholder) {
+      setFullPlaceholder(placeholder);
+      setDisplayedPlaceholder("");
+      setIsTyping(true);
+    }
+    
+    if (isTyping) {
+      // If we haven't completed the full placeholder yet
+      if (displayedPlaceholder.length < fullPlaceholder.length) {
+        const timeout = setTimeout(() => {
+          setDisplayedPlaceholder(fullPlaceholder.substring(0, displayedPlaceholder.length + 1));
+        }, 50); // Speed of typing animation (lower = faster)
+        return () => clearTimeout(timeout);
+      } else {
+        // When done typing, set a pause before erasing
+        const pauseTimeout = setTimeout(() => {
+          setIsTyping(false);
+        }, 2000); // Pause time before starting to erase
+        return () => clearTimeout(pauseTimeout);
+      }
+    } else {
+      // Erasing animation
+      if (displayedPlaceholder.length > 0) {
+        const timeout = setTimeout(() => {
+          setDisplayedPlaceholder(displayedPlaceholder.substring(0, displayedPlaceholder.length - 1));
+        }, 30); // Speed of erasing (lower = faster)
+        return () => clearTimeout(timeout);
+      } else {
+        // When done erasing, get ready for the next placeholder
+        const pauseTimeout = setTimeout(() => {
+          setIsTyping(true);
+        }, 500); // Pause time before restarting with new placeholder
+        return () => clearTimeout(pauseTimeout);
+      }
+    }
+  }, [displayedPlaceholder, isTyping, fullPlaceholder, placeholder]);
+
   // Handle Enter key
   const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
     if (e.key === "Enter" && !e.shiftKey) {
       e.preventDefault();
       onSend();
+    }
+  };
+
+  // Cursor animation
+  const cursorVariants = {
+    blinking: {
+      opacity: [0, 1, 0],
+      transition: {
+        duration: 1,
+        repeat: Infinity,
+        repeatType: "loop" as const,
+      }
     }
   };
 
@@ -77,17 +132,32 @@ export function ChatInput({
       </AnimatePresence>
       
       <div className="flex flex-col gap-2 bg-background border shadow-sm hover:shadow-md transition-all rounded-xl p-2.5 dark:bg-[#212121] dark:border-[#333]">
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2 relative">
           <textarea
             ref={textareaRef}
             value={value}
             onChange={onChange}
             onKeyDown={handleKeyDown}
-            placeholder={placeholder}
+            placeholder=""
             rows={1}
-            className="flex-1 bg-transparent border-0 focus-visible:ring-0 focus-visible:ring-offset-0 resize-none min-h-[40px] max-h-[200px] p-2 text-base placeholder:text-muted-foreground dark:text-zinc-200 dark:placeholder:text-zinc-500"
+            className="flex-1 bg-transparent border-0 focus-visible:ring-0 focus-visible:ring-offset-0 resize-none min-h-[40px] max-h-[200px] p-2 text-base dark:text-zinc-200"
             style={{ outline: 'none' }}
           />
+          
+          {/* Animated placeholder that shows when textarea is empty */}
+          {!value && (
+            <div 
+              className="absolute pointer-events-none left-2 top-1/2 transform -translate-y-1/2 text-muted-foreground flex items-center dark:text-zinc-500"
+              style={{ zIndex: 1 }}
+            >
+              <span>{displayedPlaceholder}</span>
+              <motion.span
+                variants={cursorVariants}
+                animate="blinking"
+                className="inline-block w-[2px] h-[18px] ml-[1px] bg-current"
+              />
+            </div>
+          )}
           
           <Button
             size="icon"
@@ -131,4 +201,4 @@ export function ChatInput({
       </div>
     </div>
   );
-} 
+}
